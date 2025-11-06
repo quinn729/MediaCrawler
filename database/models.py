@@ -68,6 +68,7 @@ class DailyTopics(Base):
 
     __comment__ = "每日提取话题表"
 
+
 # CREATE TABLE `crawling_tasks` (
 #     `id` int NOT NULL AUTO_INCREMENT COMMENT '自增ID',
 #     `task_id` varchar(64) NOT NULL COMMENT '任务唯一ID',
@@ -93,6 +94,41 @@ class DailyTopics(Base):
 #     KEY `idx_crawling_tasks_date` (`scheduled_date`),
 #     FOREIGN KEY (`topic_id`) REFERENCES `daily_topics`(`topic_id`) ON DELETE CASCADE
 # ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='爬取任务表';
+
+# ALTER TABLE `xhs_note`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
+# -- 为抖音视频表添加话题关联字段
+# ALTER TABLE `douyin_aweme`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
+# -- 为快手视频表添加话题关联字段
+# ALTER TABLE `kuaishou_video`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
+# -- 为B站视频表添加话题关联字段
+# ALTER TABLE `bilibili_video`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
+# -- 为微博帖子表添加话题关联字段
+# ALTER TABLE `weibo_note`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
+# -- 为贴吧帖子表添加话题关联字段
+# ALTER TABLE `tieba_note`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
+# -- 为知乎内容表添加话题关联字段
+# ALTER TABLE `zhihu_content`
+# ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
+# ADD COLUMN `crawling_task_id` varchar(64) DEFAULT NULL COMMENT '关联的爬取任务ID';
+
 
 class BilibiliVideo(Base):
     __tablename__ = "bilibili_video"
