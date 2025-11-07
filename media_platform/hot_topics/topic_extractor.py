@@ -25,11 +25,6 @@ except ImportError:
     raise ImportError("无法导入配置文件")
 
 
-os.environ["LANGSMITH_TRACING"] = "true"
-os.environ["LANGSMITH_ENDPOINT"] = "https://api.smith.langchain.com"
-os.environ["LANGSMITH_API_KEY"] = os.getenv("LANGSMITH_API_KEY", "")
-os.environ["LANGSMITH_PROJECT"] = os.getenv("LANGSMITH_PROJECT", "")
-
 DS_MODEL_REASONER = os.getenv("DS_MODEL_REASONER", "deepseek-reasoner")
 DS_MODEL_CHAT = os.getenv("DS_MODEL_CHAT", "deepseek-chat")
 DS_API_KEY = os.getenv("DS_API_KEY", "")
