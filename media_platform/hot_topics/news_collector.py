@@ -19,6 +19,7 @@ project_root = Path(__file__).parent.parent
 print("project_root:", project_root)
 sys.path.append(str(project_root))
 from loguru import logger
+from store.hot_topics import save_news, save_topic
 
 # 新闻API基础URL
 BASE_URL = "https://newsnow.busiyi.world"
@@ -184,12 +185,40 @@ class NewsCollector:
             # 处理结果
             processed_data = self._process_news_results(results)
 
-            # 保存到数据库（覆盖模式）
-            # if processed_data["news_list"]:
-            #     saved_count = self.db_manager.save_daily_news(
-            #         processed_data["news_list"], date.today()
-            #     )
-            #     processed_data["saved_count"] = saved_count
+            # 保存到数据库
+            if processed_data["news_list"]:
+                saved_count = 0
+                for news_item in processed_data["news_list"]:
+                    await save_news(news_item)
+                    saved_count += 1
+                processed_data["saved_count"] = saved_count
+
+                # 初始化话题提取器
+                from media_platform.hot_topics.topic_extractor import TopicExtractor
+                extractor = TopicExtractor()
+
+                # 提取话题
+                keywords, summary = extractor.extract_keywords_and_summary(processed_data["news_list"])
+
+                print(f"提取的关键词: {keywords}")
+                print(f"新闻总结: {summary}")
+
+                # 生成搜索关键词
+                search_keywords = extractor.get_search_keywords(keywords)
+                print(f"搜索关键词: {search_keywords}")
+
+                # 保存话题
+                topic_data = {
+                    "topic_id": f"hot_topic_{date.today().strftime('%Y%m%d')}",
+                    "topic_name": "今日热点话题",
+                    "topic_description": summary,
+                    "keywords": json.dumps(keywords),
+                    "extract_date": date.today(),
+                    "relevance_score": 1.0,
+                    "news_count": len(processed_data["news_list"]),
+                    "processing_status": "completed"
+                }
+                await save_topic(topic_data)
 
             # 打印统计信息
             self._print_collection_summary(processed_data)
@@ -239,26 +268,34 @@ class NewsCollector:
             if isinstance(item, dict):
                 title = item.get("title", "无标题").strip()
                 url = item.get("url", "")
+                description = item.get("description", "")
+                extra_info = item.get("extra", {})
 
                 # 生成新闻ID
                 news_id = f"{source}_{item.get('id', f'rank_{rank}')}"
 
                 return {
-                    "id": news_id,
+                    "news_id": news_id,
+                    "source_platform": source,
                     "title": title,
                     "url": url,
-                    "source": source,
-                    "rank": rank,
+                    "description": description,
+                    "extra_info": json.dumps(extra_info) if extra_info else None,
+                    "crawl_date": date.today().strftime("%Y-%m-%d"),
+                    "rank_position": rank,
                 }
             else:
                 # 处理字符串类型的新闻
                 title = str(item)[:100] if len(str(item)) > 100 else str(item)
                 return {
-                    "id": f"{source}_rank_{rank}",
+                    "news_id": f"{source}_rank_{rank}",
+                    "source_platform": source,
                     "title": title,
                     "url": "",
-                    "source": source,
-                    "rank": rank,
+                    "description": "",
+                    "extra_info": None,
+                    "crawl_date": date.today().strftime("%Y-%m-%d"),
+                    "rank_position": rank,
                 }
 
         except Exception as e:

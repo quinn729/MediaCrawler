@@ -36,11 +36,13 @@ class DailyNews(Base):
     rank_position = Column(Integer, index=True, comment="在热榜中的排名位置")
     add_ts = Column(BigInteger, nullable=False, comment="记录添加时间戳")
     last_modify_ts = Column(BigInteger, nullable=False, comment="记录最后修改时间戳")
-    __table_args__ = UniqueConstraint(
-        "news_id",
-        "source_platform",
-        "crawl_date",
-        name="idx_news_id_source_platform_crawl_date",
+    __table_args__ = (
+        UniqueConstraint(
+            "news_id",
+            "source_platform",
+            "crawl_date",
+            name="idx_news_id_source_platform_crawl_date",
+        ),
     )
 
 
@@ -64,7 +66,9 @@ class DailyTopics(Base):
     )
     add_ts = Column(BigInteger, nullable=False, comment="记录添加时间戳")
     last_modify_ts = Column(BigInteger, nullable=False, comment="记录最后修改时间戳")
-    UniqueConstraint("topic_id", "extract_date", name="idx_daily_topics_unique"),
+    __table_args__ = (
+        UniqueConstraint("topic_id", "extract_date", name="idx_daily_topics_unique"),
+    )
 
 
 class CrawlingTasks(Base):

@@ -12,7 +12,7 @@
 # -*- coding: utf-8 -*-
 # @Author  : persist1@126.com
 # @Time    : 2025/9/5 19:34
-# @Desc    : B站存储实现类
+# @Desc    : 热点新闻存储实现类
 import asyncio
 import csv
 import json
@@ -28,11 +28,8 @@ import config
 from base.base_crawler import AbstractStore
 from database.db_session import get_session
 from database.models import (
-    BilibiliVideoComment,
-    BilibiliVideo,
-    BilibiliUpInfo,
-    BilibiliUpDynamic,
-    BilibiliContactInfo,
+    DailyNews,
+    DailyTopics,
 )
 from tools.async_file_writer import AsyncFileWriter
 from tools import utils, words
@@ -42,7 +39,7 @@ from var import crawler_type_var
 class HotTopicsCsvStoreImplement(AbstractStore):
     def __init__(self):
         self.file_writer = AsyncFileWriter(
-            crawler_type=crawler_type_var.get(), platform="bili"
+            crawler_type=crawler_type_var.get(), platform="hot_topics"
         )
 
     async def store_content(self, content_item: Dict):
@@ -113,123 +110,101 @@ class HotTopicsDbStoreImplement(AbstractStore):
         Args:
             content_item: content item dict
         """
-        video_id = content_item.get("video_id")
+        news_id = content_item.get("news_id")
+        source_platform = content_item.get("source_platform")
+        crawl_date = content_item.get("crawl_date")
+        
         async with get_session() as session:
             result = await session.execute(
-                select(BilibiliVideo).where(BilibiliVideo.video_id == video_id)
+                select(DailyNews).where(
+                    DailyNews.news_id == news_id,
+                    DailyNews.source_platform == source_platform,
+                    DailyNews.crawl_date == crawl_date
+                )
             )
-            video_detail = result.scalar_one_or_none()
+            news_detail = result.scalar_one_or_none()
 
-            if not video_detail:
+            if not news_detail:
                 content_item["add_ts"] = utils.get_current_timestamp()
-                new_content = BilibiliVideo(**content_item)
+                content_item["last_modify_ts"] = utils.get_current_timestamp()
+                new_content = DailyNews(**content_item)
                 session.add(new_content)
             else:
                 for key, value in content_item.items():
-                    setattr(video_detail, key, value)
+                    setattr(news_detail, key, value)
+                news_detail.last_modify_ts = utils.get_current_timestamp()
             await session.commit()
 
     async def store_comment(self, comment_item: Dict):
         """
-        Bilibili comment DB storage implementation
+        HotTopics comment DB storage implementation
         Args:
             comment_item: comment item dict
         """
-        comment_id = comment_item.get("comment_id")
-        async with get_session() as session:
-            result = await session.execute(
-                select(BilibiliVideoComment).where(
-                    BilibiliVideoComment.comment_id == comment_id
-                )
-            )
-            comment_detail = result.scalar_one_or_none()
-
-            if not comment_detail:
-                comment_item["add_ts"] = utils.get_current_timestamp()
-                new_comment = BilibiliVideoComment(**comment_item)
-                session.add(new_comment)
-            else:
-                for key, value in comment_item.items():
-                    setattr(comment_detail, key, value)
-            await session.commit()
+        # 热点新闻模块暂不支持评论存储
+        pass
 
     async def store_creator(self, creator: Dict):
         """
-        Bilibili creator DB storage implementation
+        HotTopics creator DB storage implementation
         Args:
             creator: creator item dict
         """
-        creator_id = creator.get("user_id")
-        async with get_session() as session:
-            result = await session.execute(
-                select(BilibiliUpInfo).where(BilibiliUpInfo.user_id == creator_id)
-            )
-            creator_detail = result.scalar_one_or_none()
-
-            if not creator_detail:
-                creator["add_ts"] = utils.get_current_timestamp()
-                new_creator = BilibiliUpInfo(**creator)
-                session.add(new_creator)
-            else:
-                for key, value in creator.items():
-                    setattr(creator_detail, key, value)
-            await session.commit()
+        # 热点新闻模块暂不支持创作者存储
+        pass
 
     async def store_contact(self, contact_item: Dict):
         """
-        Bilibili contact DB storage implementation
+        HotTopics contact DB storage implementation
         Args:
             contact_item: contact item dict
         """
-        up_id = contact_item.get("up_id")
-        fan_id = contact_item.get("fan_id")
-        async with get_session() as session:
-            result = await session.execute(
-                select(BilibiliContactInfo).where(
-                    BilibiliContactInfo.up_id == up_id,
-                    BilibiliContactInfo.fan_id == fan_id,
-                )
-            )
-            contact_detail = result.scalar_one_or_none()
-
-            if not contact_detail:
-                contact_item["add_ts"] = utils.get_current_timestamp()
-                new_contact = BilibiliContactInfo(**contact_item)
-                session.add(new_contact)
-            else:
-                for key, value in contact_item.items():
-                    setattr(contact_detail, key, value)
-            await session.commit()
+        # 热点新闻模块暂不支持联系方式存储
+        pass
 
     async def store_dynamic(self, dynamic_item):
         """
-        Bilibili dynamic DB storage implementation
+        HotTopics dynamic DB storage implementation
         Args:
             dynamic_item: dynamic item dict
         """
-        dynamic_id = dynamic_item.get("dynamic_id")
+        # 热点新闻模块暂不支持动态存储
+        pass
+    
+    async def store_topic(self, topic_item: Dict):
+        """
+        HotTopics topic DB storage implementation
+        Args:
+            topic_item: topic item dict
+        """
+        topic_id = topic_item.get("topic_id")
+        extract_date = topic_item.get("extract_date")
+        
         async with get_session() as session:
             result = await session.execute(
-                select(BilibiliUpDynamic).where(
-                    BilibiliUpDynamic.dynamic_id == dynamic_id
+                select(DailyTopics).where(
+                    DailyTopics.topic_id == topic_id,
+                    DailyTopics.extract_date == extract_date
                 )
             )
-            dynamic_detail = result.scalar_one_or_none()
+            topic_detail = result.scalar_one_or_none()
 
-            if not dynamic_detail:
-                dynamic_item["add_ts"] = utils.get_current_timestamp()
-                new_dynamic = BilibiliUpDynamic(**dynamic_item)
-                session.add(new_dynamic)
+            if not topic_detail:
+                topic_item["add_ts"] = utils.get_current_timestamp()
+                topic_item["last_modify_ts"] = utils.get_current_timestamp()
+                new_topic = DailyTopics(**topic_item)
+                session.add(new_topic)
             else:
-                for key, value in dynamic_item.items():
-                    setattr(dynamic_detail, key, value)
+                for key, value in topic_item.items():
+                    setattr(topic_detail, key, value)
+                topic_detail.last_modify_ts = utils.get_current_timestamp()
             await session.commit()
 
 
 class HotTopicsJsonStoreImplement(AbstractStore):
     def __init__(self):
         self.file_writer = AsyncFileWriter(
-            crawler_type=crawler_type_var.get(), platform="bili"
+            crawler_type=crawler_type_var.get(), platform="hot_topics"
         )
 
     async def store_content(self, content_item: Dict):
@@ -295,6 +270,19 @@ class HotTopicsJsonStoreImplement(AbstractStore):
         """
         await self.file_writer.write_single_item_to_json(
             item=dynamic_item, item_type="dynamics"
+        )
+
+    async def store_topic(self, topic_item: Dict):
+        """
+        topic JSON storage implementation
+        Args:
+            topic_item: topic item dict
+
+        Returns:
+
+        """
+        await self.file_writer.write_single_item_to_json(
+            item=topic_item, item_type="topics"
         )
 
 
