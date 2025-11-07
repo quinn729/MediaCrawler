@@ -1,18 +1,3 @@
-# 声明：本代码仅供学习和研究目的使用。使用者应遵守以下原则：
-# 1. 不得用于任何商业用途。
-# 2. 使用时应遵守目标平台的使用条款和robots.txt规则。
-# 3. 不得进行大规模爬取或对平台造成运营干扰。
-# 4. 应合理控制请求频率，避免给目标平台带来不必要的负担。
-# 5. 不得用于任何非法或不当的用途。
-#
-# 详细许可条款请参阅项目根目录下的LICENSE文件。
-# 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。
-
-# -*- coding: utf-8 -*-
-# @Author  : relakkes@gmail.com
-# @Time    : 2024/1/14 19:34
-# @Desc    :
-
 from typing import List
 
 import config
@@ -22,7 +7,7 @@ from ._store_impl import *
 from .bilibilli_store_media import *
 
 
-class BiliStoreFactory:
+class HotTopicsStoreFactory:
     STORES = {
         "csv": BiliCsvStoreImplement,
         "db": BiliDbStoreImplement,
@@ -32,10 +17,10 @@ class BiliStoreFactory:
 
     @staticmethod
     def create_store() -> AbstractStore:
-        store_class = BiliStoreFactory.STORES.get(config.SAVE_DATA_OPTION)
+        store_class = HotTopicsStoreFactory.STORES.get(config.SAVE_DATA_OPTION)
         if not store_class:
             raise ValueError(
-                "[BiliStoreFactory.create_store] Invalid save option only supported csv or db or json or sqlite ..."
+                "[HotTopicsStoreFactory.create_store] Invalid save option only supported csv or db or json or sqlite ..."
             )
         return store_class()
 
@@ -70,7 +55,9 @@ async def update_bilibili_video(video_item: Dict):
     utils.logger.info(
         f"[store.bilibili.update_bilibili_video] bilibili video id:{video_id}, title:{save_content_item.get('title')}"
     )
-    await BiliStoreFactory.create_store().store_content(content_item=save_content_item)
+    await HotTopicsStoreFactory.create_store().store_content(
+        content_item=save_content_item
+    )
 
 
 async def update_up_info(video_item: Dict):
@@ -91,7 +78,7 @@ async def update_up_info(video_item: Dict):
     utils.logger.info(
         f"[store.bilibili.update_up_info] bilibili user_id:{video_item_card.get('mid')}"
     )
-    await BiliStoreFactory.create_store().store_creator(creator=saver_up_info)
+    await HotTopicsStoreFactory.create_store().store_creator(creator=saver_up_info)
 
 
 async def batch_update_bilibili_video_comments(video_id: str, comments: List[Dict]):
@@ -125,7 +112,9 @@ async def update_bilibili_video_comment(video_id: str, comment_item: Dict):
     utils.logger.info(
         f"[store.bilibili.update_bilibili_video_comment] Bilibili video comment: {comment_id}, content: {save_comment_item.get('content')}"
     )
-    await BiliStoreFactory.create_store().store_comment(comment_item=save_comment_item)
+    await HotTopicsStoreFactory.create_store().store_comment(
+        comment_item=save_comment_item
+    )
 
 
 async def store_video(aid, video_content, extension_file_name):
@@ -220,7 +209,9 @@ async def update_bilibili_creator_contact(creator_info: Dict, fan_info: Dict):
         "last_modify_ts": utils.get_current_timestamp(),
     }
 
-    await BiliStoreFactory.create_store().store_contact(contact_item=save_contact_item)
+    await HotTopicsStoreFactory.create_store().store_contact(
+        contact_item=save_contact_item
+    )
 
 
 async def update_bilibili_creator_dynamic(creator_info: Dict, dynamic_info: Dict):
@@ -237,4 +228,6 @@ async def update_bilibili_creator_dynamic(creator_info: Dict, dynamic_info: Dict
         "last_modify_ts": utils.get_current_timestamp(),
     }
 
-    await BiliStoreFactory.create_store().store_dynamic(dynamic_item=save_dynamic_item)
+    await HotTopicsStoreFactory.create_store().store_dynamic(
+        dynamic_item=save_dynamic_item
+    )

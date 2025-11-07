@@ -24,3 +24,29 @@ cryptography>=45.0.7
 alembic>=1.16.5
 asyncmy>=0.2.10
 sqlalchemy>=2.0.43
+
+
+# MindSpider AI爬虫项目依赖包
+# 整合BroadTopicExtraction和DeepSentimentCrawling模块的核心依赖
+
+# ===============================
+# 数据库相关
+# ===============================
+pymysql==1.1.1
+
+# ===============================
+# 话题提取模块依赖
+# ===============================
+numpy
+regex
+tqdm
+python-dateutil
+pytz
+
+# ===============================
+# 工具包
+# ===============================
+beautifulsoup4
+lxml
+loguru
+
