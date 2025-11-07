@@ -18,6 +18,8 @@ Base = declarative_base()
 
 class DailyNews(Base):
     __tablename__ = "daily_news"
+    __comment__ = "每日新闻表"
+
     id = Column(Integer, primary_key=True)
     news_id = Column(String(255), nullable=False, comment="新闻唯一ID")
     source_platform = Column(
@@ -34,7 +36,7 @@ class DailyNews(Base):
     rank_position = Column(Integer, index=True, comment="在热榜中的排名位置")
     add_ts = Column(BigInteger, nullable=False, comment="记录添加时间戳")
     last_modify_ts = Column(BigInteger, nullable=False, comment="记录最后修改时间戳")
-    UniqueConstraint(
+    __table_args__ = UniqueConstraint(
         "news_id",
         "source_platform",
         "crawl_date",
@@ -44,6 +46,8 @@ class DailyNews(Base):
 
 class DailyTopics(Base):
     __tablename__ = "daily_topics"
+    __comment__ = "每日提取话题表"
+
     id = Column(Integer, primary_key=True, comment="自增ID")
     topic_id = Column(String(64), nullable=False, comment="话题唯一ID")
     topic_name = Column(String(255), nullable=False, comment="话题名称")
@@ -60,40 +64,38 @@ class DailyTopics(Base):
     )
     add_ts = Column(BigInteger, nullable=False, comment="记录添加时间戳")
     last_modify_ts = Column(BigInteger, nullable=False, comment="记录最后修改时间戳")
+    UniqueConstraint("topic_id", "extract_date", name="idx_daily_topics_unique"),
 
-    # 唯一约束
-    __table_args__ = (
-        UniqueConstraint("topic_id", "extract_date", name="idx_daily_topics_unique"),
+
+class CrawlingTasks(Base):
+    __tablename__ = "crawling_tasks"
+    id = Column(Integer, primary_key=True, comment="自增ID")
+    task_id = Column(String(64), nullable=False, unique=True, comment="任务唯一ID")
+    topic_id = Column(String(64), nullable=False, index=True, comment="关联的话题ID")
+    platform = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        comment="目标平台(xhs|dy|ks|bili|wb|tieba|zhihu)",
     )
+    search_keywords = Column(Text, nullable=False, comment="搜索关键词(JSON格式存储)")
+    task_status = Column(
+        String(16),
+        default="pending",
+        index=True,
+        comment="任务状态(pending|running|completed|failed|paused)",
+    )
+    start_time = Column(BigInteger, comment="任务开始时间戳")
+    end_time = Column(BigInteger, comment="任务结束时间戳")
+    total_crawled = Column(BigInteger, default=0, comment="已爬取内容数量")
+    success_count = Column(BigInteger, default=0, comment="成功爬取数量")
+    error_count = Column(BigInteger, default=0, comment="错误数量")
+    error_message = Column(Text, comment="错误信息")
+    config_params = Column(Text, comment="爬取配置参数(JSON格式)")
+    scheduled_date = Column(Date, nullable=False, index=True, comment="话题提取日期")
+    add_ts = Column(BigInteger, nullable=False, comment="记录添加时间戳")
+    last_modify_ts = Column(BigInteger, nullable=False, comment="记录最后修改时间戳")
 
-    __comment__ = "每日提取话题表"
-
-
-# CREATE TABLE `crawling_tasks` (
-#     `id` int NOT NULL AUTO_INCREMENT COMMENT '自增ID',
-#     `task_id` varchar(64) NOT NULL COMMENT '任务唯一ID',
-#     `topic_id` varchar(64) NOT NULL COMMENT '关联的话题ID',
-#     `platform` varchar(32) NOT NULL COMMENT '目标平台(xhs|dy|ks|bili|wb|tieba|zhihu)',
-#     `search_keywords` text NOT NULL COMMENT '搜索关键词(JSON格式存储)',
-#     `task_status` varchar(16) DEFAULT 'pending' COMMENT '任务状态(pending|running|completed|failed|paused)',
-#     `start_time` bigint DEFAULT NULL COMMENT '任务开始时间戳',
-#     `end_time` bigint DEFAULT NULL COMMENT '任务结束时间戳',
-#     `total_crawled` int DEFAULT 0 COMMENT '已爬取内容数量',
-#     `success_count` int DEFAULT 0 COMMENT '成功爬取数量',
-#     `error_count` int DEFAULT 0 COMMENT '错误数量',
-#     `error_message` text COMMENT '错误信息',
-#     `config_params` text COMMENT '爬取配置参数(JSON格式)',
-#     `scheduled_date` date NOT NULL COMMENT '计划执行日期',
-#     `add_ts` bigint NOT NULL COMMENT '记录添加时间戳',
-#     `last_modify_ts` bigint NOT NULL COMMENT '记录最后修改时间戳',
-#     PRIMARY KEY (`id`),
-#     UNIQUE KEY `idx_crawling_tasks_unique` (`task_id`),
-#     KEY `idx_crawling_tasks_topic` (`topic_id`),
-#     KEY `idx_crawling_tasks_platform` (`platform`),
-#     KEY `idx_crawling_tasks_status` (`task_status`),
-#     KEY `idx_crawling_tasks_date` (`scheduled_date`),
-#     FOREIGN KEY (`topic_id`) REFERENCES `daily_topics`(`topic_id`) ON DELETE CASCADE
-# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='爬取任务表';
 
 # ALTER TABLE `xhs_note`
 # ADD COLUMN `topic_id` varchar(64) DEFAULT NULL COMMENT '关联的话题ID',
@@ -154,6 +156,8 @@ class BilibiliVideo(Base):
     video_comment = Column(Text)
     video_cover_url = Column(Text)
     source_keyword = Column(Text, default="")
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
 
 class BilibiliVideoComment(Base):
@@ -250,6 +254,8 @@ class DouyinAweme(Base):
     music_download_url = Column(Text)
     note_download_url = Column(Text)
     source_keyword = Column(Text, default="")
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
 
 class DouyinAwemeComment(Base):
@@ -311,6 +317,8 @@ class KuaishouVideo(Base):
     video_cover_url = Column(Text)
     video_play_url = Column(Text)
     source_keyword = Column(Text, default="")
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
 
 class KuaishouVideoComment(Base):
@@ -348,6 +356,8 @@ class WeiboNote(Base):
     shared_count = Column(Text)
     note_url = Column(Text)
     source_keyword = Column(Text, default="")
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
 
 class WeiboNoteComment(Base):
@@ -429,6 +439,8 @@ class XhsNote(Base):
     note_url = Column(Text)
     source_keyword = Column(Text, default="")
     xsec_token = Column(Text)
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
 
 class XhsNoteComment(Base):
@@ -470,6 +482,8 @@ class TiebaNote(Base):
     add_ts = Column(BigInteger)
     last_modify_ts = Column(BigInteger)
     source_keyword = Column(Text, default="")
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
 
 class TiebaComment(Base):
@@ -531,6 +545,8 @@ class ZhihuContent(Base):
     user_url_token = Column(Text)
     add_ts = Column(BigInteger)
     last_modify_ts = Column(BigInteger)
+    topic_id = Column(String(64), unique=True, comment="关联的话题ID")
+    crawling_task_id = Column(String(64), unique=True, comment="关联的爬取任务ID")
 
     # persist-1<persist1@126.com>
     # 原因：修复 ORM 模型定义错误，确保与数据库表结构一致。
